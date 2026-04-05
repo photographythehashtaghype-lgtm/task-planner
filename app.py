@@ -4,7 +4,7 @@ from datetime import datetime
 
 # 1. Setup Connection to your Google Sheet
 # Replace this with your actual Google Sheet URL
-SHEET_URL = "https://docs.google.com/spreadsheets/d/105IMC5zd_rEe-_RBTuwxA_xS9ItSmpENz4fbUjJUgXM/edit#gid=1174333021"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/105IMC5zd_rEe-_RBTuwxA_xS9ItSmpENz4fbUjJUgXM/edit?usp=sharing"
 
 st.title("📋 TRC Task Planner")
 
