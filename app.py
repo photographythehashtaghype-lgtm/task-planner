@@ -2,51 +2,36 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# --- CONFIG ---
-st.set_page_config(page_title="TRC Work Plan", layout="wide")
+# 1. Setup Connection to your Google Sheet
+# Replace this with your actual Google Sheet URL
+SHEET_URL = "https://docs.google.com/spreadsheets/d/105IMC5zd_rEe-_RBTuwxA_xS9ItSmpENz4fbUjJUgXM/edit#gid=1174333021"
 
-# Load your data (This would eventually link to a Google Sheet)
-# For now, we simulate the data structure from your 'PLAN' sheet
-def load_data():
-    # In production, use: st.connection("gsheets", type=GSheetsConnection)
-    data = {
-        "Task": ["Cash Reconciliation", "DOSA Report", "Bank Entry Update", "Vendor Bills Filing"],
-        "Assigned to": ["Jyothi", "Kavya", "Kavya", "Jyothi"],
-        "Frequency": ["Daily", "Daily", "Weekly-Friday", "Weekly-Monday"],
-        "Status": ["Pending", "Pending", "Pending", "Pending"]
-    }
-    return pd.DataFrame(data)
+st.title("📋 TRC Task Planner")
 
-df = load_data()
+# 2. Sidebar for Login
+user = st.sidebar.selectbox("Select Employee", ["Kavya", "Jyothi"])
+st.sidebar.write(f"Logged in as: **{user}**")
 
-# --- SIDEBAR ---
-st.sidebar.title("User Portal")
-user = st.sidebar.selectbox("Login as:", ["Jyothi", "Kavya"])
-view = st.sidebar.radio("View", ["Today's Tasks", "Leave Planner", "Work Report"])
-
-# --- MAIN INTERFACE ---
-st.title(f"Welcome, {user}")
-
-if view == "Today's Tasks":
-    st.subheader(f"Tasks for {datetime.now().strftime('%A, %d %B')}")
+# 3. Load Data
+try:
+    # Adding /export?format=csv converts the link into a downloadable format for Python
+    csv_url = SHEET_URL.replace("/edit#gid=", "/export?format=csv&gid=")
+    df = pd.read_csv(csv_url)
     
-    # Filter tasks for the logged-in user
-    user_tasks = df[df["Assigned to"] == user]
+    # Filter by User
+    user_tasks = df[df['Assigned to'] == user]
     
-    for index, row in user_tasks.iterrows():
-        col1, col2, col3 = st.columns([3, 1, 1])
-        with col1:
-            st.write(f"**{row['Task']}** ({row['Frequency']})")
-        with col2:
-            if st.button("Complete", key=f"done_{index}"):
-                st.success("Task Marked Done!")
-        with col3:
-            if st.button("Postpone", key=f"post_{index}"):
-                reason = st.text_input("Reason for postponing", key=f"reason_{index}")
+    st.header(f"Today's Tasks for {user}")
+    
+    if user_tasks.empty:
+        st.info("No tasks assigned for today!")
+    else:
+        for i, row in user_tasks.iterrows():
+            with st.container():
+                col1, col2 = st.columns([4, 1])
+                col1.write(f"**{row['Description']}**")
+                if col2.button("Done", key=f"btn_{i}"):
+                    st.success("Marked as Completed!")
 
-elif view == "Work Report":
-    st.subheader("Daily Work Report Generator")
-    # This section would aggregate the 'Done' tasks for the day
-    st.info("This will generate a text block you can copy to WhatsApp/Email.")
-    if st.button("Generate Report"):
-        st.code(f"{user} - {datetime.now().date()} - Work Report\n1. Completed Daily Work\n2. Bank Statement Updated...")
+except Exception as e:
+    st.error("Could not connect to Google Sheets. Check your URL and permissions.")
